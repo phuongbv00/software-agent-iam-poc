@@ -1,0 +1,199 @@
+version: '3.8'
+
+services:
+  # SPIRE Server
+  spire-server:
+    image: ghcr.io/spiffe/spire-server:1.6.3
+    hostname: spire-server
+    volumes:
+      - ./config/spire/server:/opt/spire/conf/server
+      - spire-data:/opt/spire/data
+    ports:
+      - "8081:8081"
+    command: ["-config", "/opt/spire/conf/server/server.conf"]
+    healthcheck:
+      test: ["CMD", "/opt/spire/bin/spire-server", "healthcheck"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  # SPIRE Registration
+  spire-registration:
+    image: ghcr.io/spiffe/spire-server:1.6.3
+    depends_on:
+      spire-server:
+        condition: service_healthy
+    volumes:
+      - ./config/spire/server:/opt/spire/conf/server
+    entrypoint: ["/bin/bash", "/opt/spire/conf/server/register-workload.sh"]
+
+  # SPIRE Agent
+  spire-agent:
+    image: ghcr.io/spiffe/spire-agent:1.6.3
+    hostname: spire-agent
+    depends_on:
+      spire-server:
+        condition: service_healthy
+    volumes:
+      - ./config/spire/agent:/opt/spire/conf/agent
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["-config", "/opt/spire/conf/agent/agent.conf"]
+    healthcheck:
+      test: ["CMD", "/opt/spire/bin/spire-agent", "healthcheck"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  # HashiCorp Vault
+  vault:
+    image: hashicorp/vault:1.13.3
+    hostname: vault
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./config/vault:/vault/config
+      - vault-data:/vault/data
+    environment:
+      - VAULT_ADDR=http://127.0.0.1:8200
+    command: server -config=/vault/config/vault.hcl
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  # Vault Initialization
+  vault-init:
+    image: hashicorp/vault:1.13.3
+    depends_on:
+      vault:
+        condition: service_healthy
+    volumes:
+      - ./config/vault:/vault/config
+    environment:
+      - VAULT_ADDR=http://vault:8200
+    entrypoint: ["/bin/sh", "/vault/config/init.sh"]
+
+  # Cerbos Policy Decision Point
+  cerbos:
+    image: ghcr.io/cerbos/cerbos:0.30.0
+    hostname: cerbos
+    ports:
+      - "3592:3592"
+      - "3593:3593"
+    volumes:
+      - ./config/cerbos:/config
+    command: ["server", "--config=/config/config.yaml"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3592/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  # Envoy Proxy (Auth Gateway)
+  envoy:
+    image: envoyproxy/envoy:v1.26-latest
+    hostname: envoy
+    ports:
+      - "9090:9090"  # Main proxy port
+      - "9901:9901"  # Admin interface
+    volumes:
+      - ./config/envoy:/etc/envoy
+    command: ["--config-path", "/etc/envoy/envoy.yaml"]
+    depends_on:
+      - cerbos
+      - vault
+      - chromadb
+      - minio
+
+  # ChromaDB (Vector Database)
+  chromadb:
+    image: ghcr.io/chroma-core/chroma:0.4.15
+    hostname: chromadb
+    environment:
+      - CHROMA_DB_IMPL=duckdb+parquet
+      - CHROMA_PERSIST_DIRECTORY=/chroma/data
+    volumes:
+      - chroma-data:/chroma/data
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  # ChromaDB Initialization
+  chromadb-init:
+    image: python:3.9-slim
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    volumes:
+      - ./sample-data:/sample-data
+    working_dir: /sample-data
+    command: >
+      bash -c "pip install --no-cache-dir chromadb && python init_chromadb.py"
+
+  # MinIO (Object Storage)
+  minio:
+    image: minio/minio:RELEASE.2023-09-30T07-02-29Z
+    hostname: minio
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  # MinIO setup service
+  minio-setup:
+    image: minio/mc:RELEASE.2023-09-30T07-02-29Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/public-contracts;
+      /usr/bin/mc cp /sample-data/sample-contract.pdf myminio/public-contracts/;
+      exit 0;
+      "
+    volumes:
+      - ./sample-data:/sample-data
+
+  # LLM Agent (FastAPI Service)
+  rag-agent:
+    build:
+      context: .
+      dockerfile: agent.Dockerfile
+    hostname: rag-agent
+    volumes:
+      - ./app:/app
+      - ./config/spire/agent:/spire
+    ports:
+      - "8080:8000"  # Map container port 8000 to host port 8080 to avoid conflict with ChromaDB
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}  # Pass OpenAI API key from environment
+    depends_on:
+      - spire-agent
+      - vault
+      - envoy
+      - chromadb
+      - minio
+
+volumes:
+  spire-data:
+  vault-data:
+  chroma-data:
+  minio-data:

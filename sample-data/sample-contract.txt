@@ -1,0 +1,28 @@
+SAMPLE CONTRACT
+TERMS AND CONDITIONS
+
+1. INTRODUCTION
+This Sample Contract ("Contract") is entered into by and between the parties for the purpose
+of demonstrating a RAG (Retrieval-Augmented Generation) workflow with secure identity and
+access control mechanisms.
+
+2. SERVICES
+The Provider agrees to provide the following services:
+a) Vector database access via ChromaDB
+b) Object storage access via MinIO
+c) Policy enforcement via Cerbos
+d) Token issuance via HashiCorp Vault
+e) Workload identity via SPIRE
+
+3. TERM
+This Contract shall commence on the Effective Date and continue until terminated by either party.
+
+4. CONFIDENTIALITY
+All information shared between the parties shall be considered confidential and shall not be
+disclosed to any third party without prior written consent.
+
+5. TERMINATION
+Either party may terminate this Contract with 30 days written notice to the other party.
+
+6. GOVERNING LAW
+This Contract shall be governed by the laws of the jurisdiction in which the Provider is located.

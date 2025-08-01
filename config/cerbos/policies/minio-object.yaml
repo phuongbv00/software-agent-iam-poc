@@ -1,0 +1,12 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: "default"
+  resource: "minio-object"
+  rules:
+    - actions: ["GET"]
+      effect: EFFECT_ALLOW
+      roles:
+        - retriever
+      condition:
+        match:
+          expr: request.resource.attr.bucket == "public-contracts"

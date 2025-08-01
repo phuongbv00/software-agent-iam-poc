@@ -1,0 +1,18 @@
+server:
+  httpListenAddr: ":3592"
+  grpcListenAddr: ":3593"
+
+storage:
+  driver: "disk"
+  disk:
+    directory: "/config/policies"
+    watchForChanges: true
+
+telemetry:
+  logging:
+    level: "debug"
+
+auxData:
+  jwt:
+    disableVerification: false
+    verificationKey: "/config/jwt_public_key.pem"
