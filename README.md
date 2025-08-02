@@ -1,5 +1,4 @@
-# Secure RAG Agent PoC
-
+# Software Agent IAM PoC
 This repository contains a Proof of Concept (PoC) system demonstrating secure identity and access control for an LLM agent that performs RAG (Retrieval-Augmented Generation) using various security components.
 
 ## Architecture
