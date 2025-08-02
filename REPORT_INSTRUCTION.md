@@ -10,7 +10,7 @@
 
 ### 2. Mục tiêu bài viết
 - Đề xuất giải pháp kiến trúc IAM phù hợp cho software agents
-- - Giải thích rõ các khái niệm cốt lõi
+- Giải thích rõ các khái niệm cốt lõi
 - Trình bày use case minh họa: LLM agent dùng RAG
 
 ---
