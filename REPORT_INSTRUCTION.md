@@ -9,8 +9,8 @@
 - Nhu cầu cấp thiết về một giải pháp IAM mới, phù hợp với đặc thù của software agents.
 
 ### 2. Mục tiêu bài viết
-- Giải thích rõ các khái niệm cốt lõi
 - Đề xuất giải pháp kiến trúc IAM phù hợp cho software agents
+- - Giải thích rõ các khái niệm cốt lõi
 - Trình bày use case minh họa: LLM agent dùng RAG
 
 ---
