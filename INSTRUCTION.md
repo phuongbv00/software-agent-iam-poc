@@ -45,7 +45,7 @@ Build a local PoC system to demonstrate secure identity and access control for a
 ### 6. LLM Agent (FastAPI Service)
 - Build a FastAPI service that:
   - Exposes a `/chat` endpoint for RAG workflow
-  - Uses spiffe and spiffe-tls SDKs to communicate with SPIRE agent
+  - Uses spiffe SDKs to communicate with SPIRE agent
   - Uses hvac SDK to communicate with Vault for JWT retrieval
   - Uses chromadb SDK to query ChromaDB for vector retrieval
   - Uses boto3 SDK to download files from MinIO

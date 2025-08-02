@@ -9,8 +9,8 @@
 - Nhu cầu cấp thiết về một giải pháp IAM mới, phù hợp với đặc thù của software agents.
 
 ### 2. Mục tiêu bài viết
-- Đề xuất giải pháp kiến trúc IAM phù hợp cho software agents
 - Giải thích rõ các khái niệm cốt lõi
+- Đề xuất giải pháp kiến trúc IAM phù hợp cho software agents
 - Trình bày use case minh họa: LLM agent dùng RAG
 
 ---
@@ -38,23 +38,24 @@
 - Kiểm soát truy cập thích ứng theo ngữ cảnh: ABAC, PBAC
 - Tại sao IAM truyền thống không phù hợp?
 
-### 3. Workload Identity
+### 4. Workload Identity
 - Định nghĩa: danh tính động cho phần mềm
 - Các công nghệ phổ biến cung cấp Workload Identity
-- Cụ thể về SPIFFE/SPIRE cấp danh tính (SPIFFE ID + x.509/JWT SVID) và giao thức mTLS
+- Cụ thể về SPIFFE/SPIRE cấp danh tính (SPIFFE ID, x.509/JWT SVID ?)
 - Ví dụ SPIFFE ID: `spiffe://domain.local/ns/app/sa/agent`
 
-### 4. Just-in-Time Access Token
-- Khái niệm token ngắn hạn, cấp theo nhu cầu
-- Các công cụ phổ biến cấp JIT token 
+### 5. Just-in-Time Access
+- Định nghĩa: cấp phát quyền truy cập theo nhu cầu, không lưu trữ lâu dài
+- Lợi ích: giảm rủi ro bảo mật, tăng tính linh hoạt
+- Các công cụ phổ biến: HashiCorp Vault, AWS IAM Roles Anywhere
 - Cụ thể về Vault của HashiCorp
 
-### 5. Policy Engine và kiểm soát truy cập
+### 6. Policy Engine và kiểm soát truy cập
 - PDP vs PEP: ai quyết định, ai thực thi
 - Các công cụ phổ biến: OPA, Authzed, Cerbos
 - Cerbos là gì? Hoạt động ra sao?
 
-### 6. Kiểm soát truy cập qua Proxy
+### 7. Kiểm soát truy cập qua Proxy
 - Tại sao cần proxy trong kiến trúc IAM?
 - Các công cụ phổ biến: Envoy, API Gateway
 - Cách hoạt động: xác thực token, kiểm tra policy, chuyển tiếp request
@@ -88,7 +89,8 @@
 ## IV. USE CASE DEMO: LLM AGENT SỬ DỤNG RAG
 
 ### 1. Giới thiệu use case
-- LLM agent cần lấy vector từ ChromaDB, tài liệu từ MinIO
+- RAG (Retrieval-Augmented Generation) là gì?
+- LLM agent (chatbot) cần lấy vector từ ChromaDB, tài liệu từ MinIO cho các tác vụ QA chat
 
 ### 2. Áp dụng kiến trúc IAM
 - Danh tính cấp qua SPIRE
